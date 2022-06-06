@@ -2,14 +2,15 @@ package gosession
 
 import (
 	"crypto/rand"
+	"fmt"
 	"net/http"
 	"time"
 )
 
 const (
-	GOSESSION_COOKIE_NAME      string = "SessionId"
-	GOSESSION_EXPIRATION       int64  = 43_200 // Max age is 12 hours.
-	GOSESSION_TIMER_FOR_REMOVE int64  = 3_600  // 1 hour
+	GOSESSION_COOKIE_NAME        string        = "SessionId"
+	GOSESSION_EXPIRATION         int64         = 43_200    // Max age is 12 hours.
+	GOSESSION_TIMER_FOR_CLEANING time.Duration = time.Hour // 1 hour
 )
 
 type SessionId string
@@ -23,10 +24,7 @@ type internalSession struct {
 
 type serverSessions map[SessionId]internalSession
 
-// TODO: Сделать очистку сервеного хранилища сессий от старых записей
 var allSessions serverSessions
-
-// Privat
 
 func generateId() SessionId {
 	b := make([]byte, 32)
@@ -58,7 +56,15 @@ func deleteCookie(w *http.ResponseWriter) {
 	http.SetCookie(*w, cookie)
 }
 
-// Public
+func cleaningSessions() {
+	presently := time.Now().Unix()
+	for id, ses := range allSessions {
+		if ses.expiration < presently {
+			delete(allSessions, id)
+		}
+	}
+	time.AfterFunc(GOSESSION_TIMER_FOR_CLEANING, cleaningSessions)
+}
 
 func (id SessionId) Set(name string, value interface{}) {
 	ses := allSessions[id]
@@ -88,12 +94,12 @@ func (id SessionId) RemoveValue(name string) {
 
 func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
-	presently := time.Now().Unix() + GOSESSION_EXPIRATION
 	ses := allSessions[id]
 	if ses.data == nil {
 		ses.data = make(Session, 0)
 	}
-	ses.expiration = presently
+	presently := time.Now().Unix()
+	ses.expiration = presently + GOSESSION_EXPIRATION
 	allSessions[id] = ses
 	return id
 }
@@ -102,4 +108,6 @@ func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 
 func init() {
 	allSessions = make(serverSessions, 0)
+	time.AfterFunc(GOSESSION_TIMER_FOR_CLEANING, cleaningSessions)
+	fmt.Println("GoSessions initialized")
 }
