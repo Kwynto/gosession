@@ -24,7 +24,19 @@ type internalSession struct {
 
 type serverSessions map[SessionId]internalSession
 
-var allSessions serverSessions
+type GoSessionSetings struct {
+	cookieName    string
+	expiration    int64
+	timerCleaning time.Duration
+}
+
+var allSessions serverSessions = make(serverSessions, 0)
+
+var setingsSession = GoSessionSetings{
+	cookieName:    GOSESSION_COOKIE_NAME,
+	expiration:    GOSESSION_EXPIRATION,
+	timerCleaning: GOSESSION_TIMER_FOR_CLEANING,
+}
 
 func generateId() SessionId {
 	b := make([]byte, 32)
@@ -33,11 +45,11 @@ func generateId() SessionId {
 }
 
 func getOrSetCookie(w *http.ResponseWriter, r *http.Request) SessionId {
-	data, err := r.Cookie(GOSESSION_COOKIE_NAME)
+	data, err := r.Cookie(setingsSession.cookieName)
 	if err != nil {
 		id := generateId()
 		cookie := &http.Cookie{
-			Name:   GOSESSION_COOKIE_NAME,
+			Name:   setingsSession.cookieName,
 			Value:  string(id),
 			MaxAge: 0,
 		}
@@ -49,7 +61,7 @@ func getOrSetCookie(w *http.ResponseWriter, r *http.Request) SessionId {
 
 func deleteCookie(w *http.ResponseWriter) {
 	cookie := &http.Cookie{
-		Name:   GOSESSION_COOKIE_NAME,
+		Name:   setingsSession.cookieName,
 		Value:  "",
 		MaxAge: -1,
 	}
@@ -63,7 +75,7 @@ func cleaningSessions() {
 			delete(allSessions, id)
 		}
 	}
-	time.AfterFunc(GOSESSION_TIMER_FOR_CLEANING, cleaningSessions)
+	time.AfterFunc(setingsSession.timerCleaning, cleaningSessions)
 }
 
 func (id SessionId) Set(name string, value interface{}) {
@@ -92,6 +104,10 @@ func (id SessionId) RemoveValue(name string) {
 	allSessions[id] = ses
 }
 
+func SetSetings(setings GoSessionSetings) {
+	setingsSession = setings
+}
+
 func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
 	ses := allSessions[id]
@@ -99,7 +115,7 @@ func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 		ses.data = make(Session, 0)
 	}
 	presently := time.Now().Unix()
-	ses.expiration = presently + GOSESSION_EXPIRATION
+	ses.expiration = presently + setingsSession.expiration
 	allSessions[id] = ses
 	return id
 }
@@ -107,7 +123,7 @@ func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 // Package initialization
 
 func init() {
-	allSessions = make(serverSessions, 0)
-	time.AfterFunc(GOSESSION_TIMER_FOR_CLEANING, cleaningSessions)
+	// allSessions = make(serverSessions, 0) // TODO: After need delete
+	time.AfterFunc(setingsSession.timerCleaning, cleaningSessions)
 	fmt.Println("GoSessions initialized")
 }
