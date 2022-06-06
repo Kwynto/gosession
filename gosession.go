@@ -3,19 +3,28 @@ package gosession
 import (
 	"crypto/rand"
 	"net/http"
+	"time"
 )
 
 const (
-	GOSESSION_COOKIE_NAME string = "SessionId"
-	GOSESSION_MAX_AGE     int    = 43_200 // Max age is 12 hours.
+	GOSESSION_COOKIE_NAME      string = "SessionId"
+	GOSESSION_EXPIRATION       int64  = 43_200 // Max age is 12 hours.
+	GOSESSION_TIMER_FOR_REMOVE int64  = 3_600  // 1 hour
 )
 
 type SessionId string
+
 type Session map[string]interface{}
-type Sessions map[SessionId]Session
+
+type internalSession struct {
+	expiration int64
+	data       Session
+}
+
+type serverSessions map[SessionId]internalSession
 
 // TODO: Сделать очистку сервеного хранилища сессий от старых записей
-var AllSessions Sessions
+var allSessions serverSessions
 
 // Privat
 
@@ -52,41 +61,45 @@ func deleteCookie(w *http.ResponseWriter) {
 // Public
 
 func (id SessionId) Set(name string, value interface{}) {
-	ses := AllSessions[id]
-	ses[name] = value
-	AllSessions[id] = ses
+	ses := allSessions[id]
+	ses.data[name] = value
+	allSessions[id] = ses
 }
 
 func (id SessionId) GetAll() Session {
-	return AllSessions[id]
+	return allSessions[id].data
 }
 
 func (id SessionId) GetOne(name string) interface{} {
-	data := AllSessions[id]
-	return data[name]
+	ses := allSessions[id]
+	return ses.data[name]
 }
 
 func (id SessionId) RemoveSession(w *http.ResponseWriter) {
-	delete(AllSessions, id)
+	delete(allSessions, id)
 	deleteCookie(w)
 }
 
 func (id SessionId) RemoveValue(name string) {
-	data := AllSessions[id]
-	delete(data, name)
-	AllSessions[id] = data
+	ses := allSessions[id]
+	delete(ses.data, name)
+	allSessions[id] = ses
 }
 
 func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
-	data := AllSessions[id]
-	if data == nil {
-		data := make(Session, 0)
-		AllSessions[id] = data
+	presently := time.Now().Unix() + GOSESSION_EXPIRATION
+	ses := allSessions[id]
+	if ses.data == nil {
+		ses.data = make(Session, 0)
 	}
+	ses.expiration = presently
+	allSessions[id] = ses
 	return id
 }
 
+// Package initialization
+
 func init() {
-	AllSessions = make(Sessions, 0)
+	allSessions = make(serverSessions, 0)
 }
