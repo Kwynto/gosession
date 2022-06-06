@@ -6,26 +6,26 @@ import (
 )
 
 const (
-	GOSESSION_COOKIE_NAME string = "sessionId"
+	GOSESSION_COOKIE_NAME string = "SessionId"
 	GOSESSION_MAX_AGE     int    = 43_200 // Max age is 12 hours.
 )
 
-type sessionId string
+type SessionId string
 type Session map[string]interface{}
-type Sessions map[sessionId]Session
+type Sessions map[SessionId]Session
 
 // TODO: Сделать очистку сервеного хранилища сессий от старых записей
 var AllSessions Sessions
 
 // Privat
 
-func generateId() sessionId {
+func generateId() SessionId {
 	b := make([]byte, 32)
 	rand.Read(b)
-	return sessionId(b)
+	return SessionId(b)
 }
 
-func getOrSetCookie(w *http.ResponseWriter, r *http.Request) sessionId {
+func getOrSetCookie(w *http.ResponseWriter, r *http.Request) SessionId {
 	data, err := r.Cookie(GOSESSION_COOKIE_NAME)
 	if err != nil {
 		id := generateId()
@@ -37,7 +37,7 @@ func getOrSetCookie(w *http.ResponseWriter, r *http.Request) sessionId {
 		http.SetCookie(*w, cookie)
 		return id
 	}
-	return sessionId(data.Value)
+	return SessionId(data.Value)
 }
 
 func deleteCookie(w *http.ResponseWriter) {
@@ -51,33 +51,33 @@ func deleteCookie(w *http.ResponseWriter) {
 
 // Public
 
-func (id sessionId) Set(name string, value interface{}) {
+func (id SessionId) Set(name string, value interface{}) {
 	ses := AllSessions[id]
 	ses[name] = value
 	AllSessions[id] = ses
 }
 
-func (id sessionId) GetAll() Session {
+func (id SessionId) GetAll() Session {
 	return AllSessions[id]
 }
 
-func (id sessionId) GetOne(name string) interface{} {
+func (id SessionId) GetOne(name string) interface{} {
 	data := AllSessions[id]
 	return data[name]
 }
 
-func (id sessionId) RemoveSession(w *http.ResponseWriter) {
+func (id SessionId) RemoveSession(w *http.ResponseWriter) {
 	delete(AllSessions, id)
 	deleteCookie(w)
 }
 
-func (id sessionId) RemoveValue(name string) {
+func (id SessionId) RemoveValue(name string) {
 	data := AllSessions[id]
 	delete(data, name)
 	AllSessions[id] = data
 }
 
-func Start(w *http.ResponseWriter, r *http.Request) sessionId {
+func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
 	data := AllSessions[id]
 	if data == nil {
