@@ -31,9 +31,9 @@ type serverSessions map[SessionId]internalSession
 
 // The GoSessionSetings type describes the settings for the session system
 type GoSessionSetings struct {
-	cookieName    string
-	expiration    int64
-	timerCleaning time.Duration
+	CookieName    string
+	Expiration    int64
+	TimerCleaning time.Duration
 }
 
 // The allSessions variable stores all sessions of all clients
@@ -41,25 +41,25 @@ var allSessions serverSessions = make(serverSessions, 0)
 
 // Session mechanism settings variable
 var setingsSession = GoSessionSetings{
-	cookieName:    GOSESSION_COOKIE_NAME,
-	expiration:    GOSESSION_EXPIRATION,
-	timerCleaning: GOSESSION_TIMER_FOR_CLEANING,
+	CookieName:    GOSESSION_COOKIE_NAME,
+	Expiration:    GOSESSION_EXPIRATION,
+	TimerCleaning: GOSESSION_TIMER_FOR_CLEANING,
 }
 
 // The generateId() generates a new session id in a random, cryptographically secure manner
 func generateId() SessionId {
 	b := make([]byte, 32)
 	rand.Read(b)
-	return SessionId(b)
+	return SessionId(fmt.Sprintf("%x", b))
 }
 
 // The getOrSetCookie(w, r) gets the session id from the cookie, or creates a new one if it can't get
 func getOrSetCookie(w *http.ResponseWriter, r *http.Request) SessionId {
-	data, err := r.Cookie(setingsSession.cookieName)
+	data, err := r.Cookie(setingsSession.CookieName)
 	if err != nil {
 		id := generateId()
 		cookie := &http.Cookie{
-			Name:   setingsSession.cookieName,
+			Name:   setingsSession.CookieName,
 			Value:  string(id),
 			MaxAge: 0,
 		}
@@ -72,7 +72,7 @@ func getOrSetCookie(w *http.ResponseWriter, r *http.Request) SessionId {
 // The deleteCookie(w) deletes the session cookie
 func deleteCookie(w *http.ResponseWriter) {
 	cookie := &http.Cookie{
-		Name:   setingsSession.cookieName,
+		Name:   setingsSession.CookieName,
 		Value:  "",
 		MaxAge: -1,
 	}
@@ -87,7 +87,7 @@ func cleaningSessions() {
 			delete(allSessions, id)
 		}
 	}
-	time.AfterFunc(setingsSession.timerCleaning, cleaningSessions)
+	time.AfterFunc(setingsSession.TimerCleaning, cleaningSessions)
 }
 
 // The Set(name, value) SessionId-method to set the client variable to be stored in the session system
@@ -124,7 +124,7 @@ func (id SessionId) RemoveValue(name string) {
 	allSessions[id] = ses
 }
 
-// The Settings(settings) sets new settings for the session mechanism
+// The SetSetings(settings) sets new settings for the session mechanism
 // setings - gosession.GoSessionSetings public type variable for setting new session settings
 func SetSetings(setings GoSessionSetings) {
 	setingsSession = setings
@@ -139,13 +139,13 @@ func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 		ses.data = make(Session, 0)
 	}
 	presently := time.Now().Unix()
-	ses.expiration = presently + setingsSession.expiration
+	ses.expiration = presently + setingsSession.Expiration
 	allSessions[id] = ses
 	return id
 }
 
 // Package initialization
 func init() {
-	time.AfterFunc(setingsSession.timerCleaning, cleaningSessions)
+	time.AfterFunc(setingsSession.TimerCleaning, cleaningSessions)
 	fmt.Println("GoSessions initialized")
 }
