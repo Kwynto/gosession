@@ -17,87 +17,6 @@ const (
 
 var result SessionId
 
-// ----------------------------
-// Helper functions for testing
-// ----------------------------
-
-// for fakeServer
-
-// for rearServer
-/*
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	Start(&w, r)
-	html := `
-	<html>
-		<head>
-			<title>Title</title>
-		</head>
-		<body>
-			<form action="/auth" method="post" class="form-horizontal">
-				<input name="login" type="text" value="" placeholder="Login" required pattern="^[a-zA-Z0-9_-]+$">
-				<input name="password" type="password" value="" placeholder="Password" required pattern="^[a-zA-Z0-9]+$">
-				<button name="signin" type="submit">Auth button</button>
-			</form>
-		</body>
-	</html>
-	`
-	fmt.Fprint(w, html)
-}
-
-func testHandler(w http.ResponseWriter, r *http.Request) {
-	sesid := Start(&w, r)
-	name := sesid.GetOne("username")
-	password := sesid.GetOne("password")
-	floatnumber := sesid.GetOne("float")
-	intnumber := sesid.GetOne("number")
-	construct := sesid.GetOne("construct")
-	allses := sesid.GetAll()
-
-	cleaningSessions()
-
-	html := "<html><head><title>Title</title></head><body>This is a test!<br>Username: %s<br>Password: %s<br>%v<br>%v<br>%v<br>%v<br></body></html>"
-	fmt.Fprintf(w, html, name, password, floatnumber, intnumber, construct, allses)
-
-	sesid.RemoveValue("construct")
-	sesid.RemoveValue("dest")
-
-	sesid.RemoveSession(&w)
-}
-
-func authHandler(w http.ResponseWriter, r *http.Request) {
-	sesid := Start(&w, r)
-	name := r.PostFormValue("login")
-	password := r.PostFormValue("password")
-	sesid.Set("username", name)
-	sesid.Set("password", password)
-	sesid.Set("float", 3.14)
-	sesid.Set("number", 13)
-	tstruct := struct {
-		name string
-		pas  string
-		fnum float64
-		inum int
-	}{
-		name: name,
-		pas:  password,
-		fnum: 2.2,
-		inum: 15,
-	}
-	sesid.Set("construct", tstruct)
-	html := "<html><head><title>Title</title></head><body>%s<br><a href='/test'>Test session</a></body></html>"
-	fmt.Fprintf(w, html, name)
-}
-
-func realServer() {
-	SetSetings(GoSessionSetings{CookieName: "goSessionID", Expiration: 40, TimerCleaning: time.Second * 90})
-	PORT := ":8001"
-	http.HandleFunc("/test", testHandler)
-	http.HandleFunc("/auth", authHandler)
-	http.HandleFunc("/", rootHandler)
-	http.ListenAndServe(PORT, nil)
-}
-*/
-
 // --------------
 // Test functions
 // --------------
@@ -248,7 +167,7 @@ func Test_cleaningSessions(t *testing.T) {
 		cleaningSessions() // calling the tested function
 		// work check
 		if len(allSessions) != trueInd {
-			t.Error("Error cleaningSessions()") // TODO: Write undestendle massage
+			t.Error("The number of correct entries does not match.")
 		}
 	}
 }
@@ -267,7 +186,7 @@ func Test_Set(t *testing.T) {
 		name := "test variable"
 		switch rand.Intn(3) {
 		case 0:
-			value = rune(rand.Intn(27) + 27) // TODO: Creat realistic rune
+			value = true
 		case 1:
 			value = fmt.Sprintf("test string %d", rand.Intn(100))
 		case 2:
@@ -279,7 +198,7 @@ func Test_Set(t *testing.T) {
 		id.Set(name, value) // calling the tested function
 		// work check
 		if allSessions[id].data[name] != value {
-			t.Error("Error Set()") // TODO: Write undestendle massage
+			t.Error("Failed to write variable to session storage.")
 		}
 	}
 }
@@ -297,7 +216,7 @@ func Test_GetAll(t *testing.T) {
 			name = fmt.Sprintf("test name  %d", rand.Intn(100))
 			switch rand.Intn(3) {
 			case 0:
-				value = rune(rand.Intn(27) + 27) // TODO: Creat realistic rune
+				value = true
 			case 1:
 				value = fmt.Sprintf("test string %d", rand.Intn(100))
 			case 2:
@@ -316,7 +235,7 @@ func Test_GetAll(t *testing.T) {
 		// work check
 		for iname, v := range ses {
 			if v != data[iname] {
-				t.Error("Error GetAll()") // TODO: Write undestendle massage
+				t.Error("Incorrect data received from session variable storage")
 			}
 		}
 	}
@@ -334,7 +253,7 @@ func Test_Get(t *testing.T) {
 		name = "test name"
 		switch rand.Intn(3) {
 		case 0:
-			value = rune(rand.Intn(27) + 27) // TODO: Creat realistic rune
+			value = true
 		case 1:
 			value = fmt.Sprintf("test string %d", rand.Intn(100))
 		case 2:
@@ -351,7 +270,7 @@ func Test_Get(t *testing.T) {
 		getedValue := id.Get(name) // calling the tested function
 		// work check
 		if getedValue != value {
-			t.Error("Error Get()") // TODO: Write undestendle massage
+			t.Error("Incorrect data received from session variable storage")
 		}
 	}
 }
@@ -394,7 +313,7 @@ func Test_RemoveSession(t *testing.T) {
 
 		// work check
 		if id != hid {
-			t.Error("несоответствие идентификаторов") // TODO: перевести
+			t.Error("ID mismatch")
 		}
 
 		cookies := w.Result().Cookies()
@@ -406,12 +325,12 @@ func Test_RemoveSession(t *testing.T) {
 		}
 		// work check
 		if !noErr {
-			t.Error("the server did not delete the session cookie")
+			t.Error("The server did not delete the session cookie")
 		}
 
 		// work check
 		if allSessions[id].data != nil {
-			t.Error("сессия не была удалена") // TODO: перевести
+			t.Error("Session has not been deleted.")
 		}
 	}
 }
@@ -428,7 +347,7 @@ func Test_RemoveValue(t *testing.T) {
 		name = "test name"
 		switch rand.Intn(3) {
 		case 0:
-			value = rune(rand.Intn(27) + 27) // TODO: Creat realistic rune
+			value = true
 		case 1:
 			value = fmt.Sprintf("test string %d", rand.Intn(100))
 		case 2:
@@ -445,7 +364,7 @@ func Test_RemoveValue(t *testing.T) {
 		id.RemoveValue(name) // calling the tested function
 		// work check
 		if allSessions[id].data[name] == value {
-			t.Error("Error RemoveValue()") // TODO: Write undestendle massage
+			t.Error("Failed to change settings")
 		}
 	}
 }
@@ -466,12 +385,12 @@ func Test_SetSetings(t *testing.T) {
 		SetSetings(test_setingsSession1) // calling the tested function
 		// work check
 		if test_setingsSession1 != setingsSession {
-			t.Error("Error SetSetings()") // TODO: Write undestendle massage
+			t.Error("Failed to change settings.")
 		}
 		SetSetings(test_setingsSession2) // calling the tested function
 		// work check
 		if test_setingsSession2 != setingsSession {
-			t.Error("Error SetSetings()") // TODO: Write undestendle massage
+			t.Error("Failed to change settings.")
 		}
 	}
 }
@@ -517,31 +436,9 @@ func Test_Start(t *testing.T) {
 
 		// work check
 		if id1 != id2 {
-			t.Errorf("Идентификаторы сервера и клиента не равны:\n server: %v\n client: %v\n", id1, id2) // TODO: перевести
+			t.Errorf("Server and client IDs are not equal:\n server: %v\n client: %v\n", id1, id2)
 		}
 	}
-}
-
-func Test_fakeServer(t *testing.T) {
-	// TODO: Create a fake web server for testing
-}
-
-func Test_realServer(t *testing.T) {
-	// go realServer()
-	// for i := 0; i < 100; i++ {
-	// 	time.Sleep(time.Second)
-	// }
-	// for i := 0; i < GOSESSION_TESTING_ITER; i++ {
-	// 	req, err := http.NewRequest("GET", "/get", nil)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return
-	// 	}
-
-	// 	rr := httptest.NewRecorder()
-	// 	handler := http.HandlerFunc(getData)
-	// 	handler.ServeHTTP(rr, req)
-	// }
 }
 
 // ---------------------------------
