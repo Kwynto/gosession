@@ -104,9 +104,9 @@ func (id SessionId) GetAll() Session {
 	return allSessions[id].data
 }
 
-// The GetOne(name) SessionId-method to get a specific client variable from the session system
+// The Get(name) SessionId-method to get a specific client variable from the session system
 // name - session variable name
-func (id SessionId) GetOne(name string) interface{} {
+func (id SessionId) Get(name string) interface{} {
 	ses := allSessions[id]
 	return ses.data[name]
 }
