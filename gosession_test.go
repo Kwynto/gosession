@@ -1,7 +1,6 @@
 package gosession
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"math/rand"
@@ -12,10 +11,8 @@ import (
 )
 
 const (
-	GOSESSION_TESTING_ITER int = 10000
+	GOSESSION_TESTING_ITER int = 1000
 )
-
-var result SessionId
 
 // --------------
 // Test functions
@@ -29,9 +26,12 @@ func Test_generateId(t *testing.T) {
 	for _, v1 := range testVar {
 		count := 0
 		for _, v2 := range testVar {
-			if bytes.Equal([]byte(v1), []byte(v2)) {
+			if v1 == v2 {
 				count++
 			}
+			// if bytes.Equal([]byte(v1), []byte(v2)) {
+			// 	count++
+			// }
 		}
 		// work check
 		if count > 1 {
@@ -441,18 +441,165 @@ func Test_Start(t *testing.T) {
 	}
 }
 
-// ---------------------------------
-// Helper functions for benchmarking
-// ---------------------------------
-
 // ----------------------
 // Functions benchmarking
 // ----------------------
 
 func Benchmark_generateId(b *testing.B) {
-	var r SessionId
 	for i := 0; i < b.N; i++ {
-		r = generateId()
+		generateId() // calling the tested function
 	}
-	result = r
+}
+
+func Benchmark_getOrSetCookie(b *testing.B) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		getOrSetCookie(&w, r) // calling the tested function
+	}
+	r := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	for i := 0; i < b.N; i++ {
+		handler(w, r)
+	}
+}
+
+func Benchmark_deleteCookie(b *testing.B) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		deleteCookie(&w) // calling the tested function
+	}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/", nil)
+	cookie := &http.Cookie{
+		Name:   setingsSession.CookieName,
+		Value:  string(generateId()),
+		MaxAge: 0,
+	}
+	r.AddCookie(cookie)
+
+	for i := 0; i < b.N; i++ {
+		handler(w, r)
+	}
+}
+
+func Benchmark_cleaningSessions(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		cleaningSessions() // calling the tested function
+	}
+}
+
+func Benchmark_Set(b *testing.B) {
+	rand.Seed(time.Now().Unix())
+	id := generateId()
+	data := make(Session)
+	allSessions[id] = internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       data,
+	}
+	name := fmt.Sprintf("BenchName%d", rand.Intn(100))
+	value := rand.Float64()
+
+	for i := 0; i < b.N; i++ {
+		id.Set(name, value) // calling the tested function
+	}
+}
+
+func Benchmark_GetAll(b *testing.B) {
+	rand.Seed(time.Now().Unix())
+	id := generateId()
+	data := make(Session)
+	name := fmt.Sprintf("BenchName%d", rand.Intn(100))
+	value := rand.Float64()
+	data[name] = value
+	allSessions[id] = internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       data,
+	}
+
+	for i := 0; i < b.N; i++ {
+		id.GetAll() // calling the tested function
+	}
+}
+
+func Benchmark_Get(b *testing.B) {
+	rand.Seed(time.Now().Unix())
+	id := generateId()
+	data := make(Session)
+	name := fmt.Sprintf("BenchName%d", rand.Intn(100))
+	value := rand.Float64()
+	data[name] = value
+	allSessions[id] = internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       data,
+	}
+
+	for i := 0; i < b.N; i++ {
+		id.Get(name) // calling the tested function
+	}
+}
+
+func Benchmark_RemoveSession(b *testing.B) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/", nil)
+	id := generateId()
+	cookie := &http.Cookie{
+		Name:   setingsSession.CookieName,
+		Value:  string(id),
+		MaxAge: 0,
+	}
+	r.AddCookie(cookie)
+
+	data := make(Session)
+	name := fmt.Sprintf("BenchName%d", rand.Intn(100))
+	value := rand.Float64()
+	data[name] = value
+	allSessions[id] = internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       data,
+	}
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		id.RemoveSession(&w) // calling the tested function
+	}
+
+	for i := 0; i < b.N; i++ {
+		handler(w, r)
+	}
+}
+
+func Benchmark_RemoveValue(b *testing.B) {
+	rand.Seed(time.Now().Unix())
+	id := generateId()
+	data := make(Session)
+	name := fmt.Sprintf("BenchName%d", rand.Intn(100))
+	value := rand.Float64()
+	data[name] = value
+	allSessions[id] = internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       data,
+	}
+
+	for i := 0; i < b.N; i++ {
+		id.RemoveValue(name) // calling the tested function
+	}
+}
+
+func Benchmark_SetSetings(b *testing.B) {
+	var test_setingsSession = GoSessionSetings{
+		CookieName:    GOSESSION_COOKIE_NAME,
+		Expiration:    GOSESSION_EXPIRATION,
+		TimerCleaning: GOSESSION_TIMER_FOR_CLEANING,
+	}
+	for i := 0; i < b.N; i++ {
+		SetSetings(test_setingsSession) // calling the tested function
+	}
+}
+
+func Benchmark_Start(b *testing.B) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		Start(&w, r) // calling the tested function
+	}
+	r := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	for i := 0; i < b.N; i++ {
+		handler(w, r)
+	}
 }
