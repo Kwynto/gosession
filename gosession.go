@@ -4,9 +4,14 @@ package gosession
 import (
 	"crypto/rand"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
+
+// TODO: Написать StartSecure для замены идентификатора сессии налету
+// TODO: Сделать хранилище старых сессий в файле или базе данных
+// TODO: Сделать возврат ошибок из методов
 
 const (
 	GOSESSION_COOKIE_NAME        string        = "SessionId" // Name for session cookies
@@ -87,6 +92,7 @@ func cleaningSessions() {
 			delete(allSessions, id)
 		}
 	}
+	// log.Println("Session storage has been serviced.")
 	time.AfterFunc(setingsSession.TimerCleaning, cleaningSessions)
 }
 
@@ -147,5 +153,5 @@ func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 // Package initialization
 func init() {
 	time.AfterFunc(setingsSession.TimerCleaning, cleaningSessions)
-	fmt.Println("GoSessions initialized")
+	log.Println("GoSessions initialized")
 }
