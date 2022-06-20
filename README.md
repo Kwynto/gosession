@@ -1,5 +1,5 @@
 # GoSession
-This is quick session for net/http in GoLang.
+This is quick session for net/http in GoLang.  
 This package is perhaps the best implementation of the session mechanism, at least it tries to become one.
 
 **Important note**
@@ -19,10 +19,10 @@ This package is designed to work with the standard net/http package and has not 
   - [About the author](#about-the-author)
 
 ## What are sessions and why are they needed
-A session on a site is a good method of identifying a site user.
-A session is often used to authorize a user and retain their identity until the user closes the browser page.
-While the user is working with the site, he saves cookies with a unique identifier, by this identifier one can distinguish one user from another and the server can store special data for a particular user.
-User data received during the session period can be used for authorization, marketing and many other cases when it is necessary to collect, process and analyze data about a specific user.
+A session on a site is a good method of identifying a site user.  
+A session is often used to authorize a user and retain their identity until the user closes the browser page.  
+While the user is working with the site, he saves cookies with a unique identifier, by this identifier one can distinguish one user from another and the server can store special data for a particular user.  
+User data received during the session period can be used for authorization, marketing and many other cases when it is necessary to collect, process and analyze data about a specific user.  
 A session is an efficient method of interacting with a user.
 
 ## How to connect GoSession
@@ -43,7 +43,7 @@ To use the GoSession package, you need to import it into your code.
 import "github.com/Kwynto/gosession"
 ```
 
-All operations for working with sessions must be called from handlers.
+All operations for working with sessions must be called from handlers.  
 Each time you start working with the session store, you need to call `gosession.Start(w *http.ResponseWriter, r *http.Request)`, since this function returns the identifier of the store and allows you to access the elements of the store through the identifier.
 ```
 id := gosession.Start(&w, r)
@@ -80,7 +80,7 @@ func writeHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Reading is done by `(id SessionId) Get(name string) interface{}` method for one variable
+Reading is done by `(id SessionId) Get(name string) interface{}` method for one variable  
 and the `(id SessionId) GetAll() Session` method to read all session variables
 ```
 anyVariable := id.Get("name variable")
@@ -152,7 +152,7 @@ func destroyHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-GoSession allows you to change its settings with the `SetSettings(setings GoSessionSetings)` function,
+GoSession allows you to change its settings with the `SetSettings(setings GoSessionSetings)` function,  
 which is used outside of the handler, for example, inside the `main()` function
 ```
 var mySetingsSession = gosession.GoSessionSetings{
@@ -364,8 +364,8 @@ Visit site
 
 ## About the package
 
-GoSession has a description of its functionality in a `README.md` file and internal documentation.
-GoSession is tested and has a performance check.
+GoSession has a description of its functionality in a `README.md` file and internal documentation.  
+GoSession is tested and has a performance check.  
 You can use the GoSession tests and documentation yourself.
 
 Download the GoSession project to your computer:
@@ -376,18 +376,18 @@ Go to the project folder:
 
 **Check out the documentation**
 
-Look at the documentation in two steps.
+Look at the documentation in two steps.  
 First, in the console, run:
 > godoc -http=:8080
 
 And then in your web browser navigate to the uri:
 > http://localhost:8080
 
-*The `godoc` utility may not be present in your Go build and you may need to install it
+*The `godoc` utility may not be present in your Go build and you may need to install it  
 command `go get -v golang.org/x/tools/cmd/godoc`*
 
-You can also use Go's standard functionality to view documentation in the console via `go doc`.
-For example:
+You can also use Go's standard functionality to view documentation in the console via `go doc`.  
+For example:  
 > go doc Start
 
 If your IDE is good enough, then the documentation for functions and methods will be available from your code editor.
@@ -400,9 +400,9 @@ Run tests:
 Run tests showing code coverage:
 > go test -cover -v
 
-You can view code coverage in detail in your web browser.
+You can view code coverage in detail in your web browser.  
 To do this, you need to sequentially execute two commands in the console:
-> go test -coverprofile="coverage.out" -v
+> go test -coverprofile="coverage.out" -v  
 > go tool cover -html="coverage.out"
 
 **Performance**
@@ -414,7 +414,7 @@ You can look at code performance tests:
 
 ## About the author
 
-The author of the project is Constantine Zavezeon (Kwynto).
-You can contact the author by e-mail kwynto@mail.ru
-The author accepts proposals for participation in open source projects,
+The author of the project is Constantine Zavezeon (Kwynto).  
+You can contact the author by e-mail kwynto@mail.ru  
+The author accepts proposals for participation in open source projects,  
 as well as willing to accept job offers.
