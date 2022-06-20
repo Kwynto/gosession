@@ -12,6 +12,7 @@ import (
 // TODO: Написать StartSecure для замены идентификатора сессии налету
 // TODO: Сделать хранилище старых сессий в файле или базе данных
 // TODO: Сделать возврат ошибок из методов
+// TODO: Сделать allSession потокобезопасной
 
 const (
 	GOSESSION_COOKIE_NAME        string        = "SessionId" // Name for session cookies
@@ -117,14 +118,14 @@ func (id SessionId) Get(name string) interface{} {
 	return ses.data[name]
 }
 
-// The RemoveSession(w) SessionId-method to remove the entire client session
-func (id SessionId) RemoveSession(w *http.ResponseWriter) {
+// The Destroy(w) SessionId-method to remove the entire client session
+func (id SessionId) Destroy(w *http.ResponseWriter) {
 	delete(allSessions, id)
 	deleteCookie(w)
 }
 
-// The RemoveValue(name) SessionId-method to remove one client variable from the session by its name
-func (id SessionId) RemoveValue(name string) {
+// The Remove(name) SessionId-method to remove one client variable from the session by its name
+func (id SessionId) Remove(name string) {
 	ses := allSessions[id]
 	delete(ses.data, name)
 	allSessions[id] = ses

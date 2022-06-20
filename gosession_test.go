@@ -275,7 +275,7 @@ func Test_Get(t *testing.T) {
 	}
 }
 
-func Test_RemoveSession(t *testing.T) {
+func Test_Destroy(t *testing.T) {
 	var hid SessionId
 
 	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
@@ -300,7 +300,7 @@ func Test_RemoveSession(t *testing.T) {
 
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			hid = Start(&w, r)
-			hid.RemoveSession(&w) // calling the tested function
+			hid.Destroy(&w) // calling the tested function
 			io.WriteString(w, "<html><head><title>Title</title></head><body>Body</body></html>")
 		}
 		handler(w, r)
@@ -335,7 +335,7 @@ func Test_RemoveSession(t *testing.T) {
 	}
 }
 
-func Test_RemoveValue(t *testing.T) {
+func Test_Remove(t *testing.T) {
 	var value interface{}
 	var name string
 	rand.Seed(time.Now().Unix())
@@ -361,7 +361,7 @@ func Test_RemoveValue(t *testing.T) {
 			data:       data,
 		}
 
-		id.RemoveValue(name) // calling the tested function
+		id.Remove(name) // calling the tested function
 		// work check
 		if allSessions[id].data[name] == value {
 			t.Error("Failed to change settings")
@@ -536,7 +536,7 @@ func Benchmark_Get(b *testing.B) {
 	}
 }
 
-func Benchmark_RemoveSession(b *testing.B) {
+func Benchmark_Destroy(b *testing.B) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	id := generateId()
@@ -557,7 +557,7 @@ func Benchmark_RemoveSession(b *testing.B) {
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		id.RemoveSession(&w) // calling the tested function
+		id.Destroy(&w) // calling the tested function
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -565,7 +565,7 @@ func Benchmark_RemoveSession(b *testing.B) {
 	}
 }
 
-func Benchmark_RemoveValue(b *testing.B) {
+func Benchmark_Remove(b *testing.B) {
 	rand.Seed(time.Now().Unix())
 	id := generateId()
 	data := make(Session)
@@ -578,7 +578,7 @@ func Benchmark_RemoveValue(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		id.RemoveValue(name) // calling the tested function
+		id.Remove(name) // calling the tested function
 	}
 }
 
