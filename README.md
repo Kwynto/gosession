@@ -15,7 +15,8 @@ This package is designed to work with the standard net/http package and has not 
   - [Examples of using](#examples-of-using)
     - [Example 1](#example-1)
     - [Example 2](#example-2)
-  - [About the package](#about-the-package)
+    - [Example 3](#example-3)
+  - [About the package  (documentation, testing and benchmarking)](#about-the-package)
   - [About the author](#about-the-author)
 
 ## What are sessions and why are they needed
@@ -360,7 +361,965 @@ Visit site
 > http://localhost:8080/
 
 ### Example 2:
+*This example shows a primitive way to collect information about user actions. You can collect any public user data, as well as track user actions, and then save and process this data.*
 
+Create an example folder and navigate to it.
+
+Create a module for your application
+> go mod init example2
+
+Install GoSession
+> go get github.com/Kwynto/gosession
+
+Create a `main.go` file and save this code into it:
+```
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/Kwynto/gosession"
+)
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	var html string
+	header := `
+	<html>
+		<head>
+			<title>Title</title>
+		</head>
+		<body>
+			<p>
+			<a href="/">Home Page</a><br>
+			<a href="/firstpage">First Page</a><br>
+			<a href="/secondpage">Second Page</a><br>
+			<a href="/thirdpage">Third Page</a><br>
+			<a href="/fourthpage">Fourth Page</a><br>
+			<a href="/fifthpage">Fifth Page</a><br>
+			</p>
+			<p>
+			Website browsing history:<br>
+	`
+
+	footer := `
+			</p>
+		</body>
+	</html>
+	`
+
+	id := gosession.Start(&w, r)
+	transitions := id.Get("transitions")
+
+	if transitions == nil {
+		transitions = ""
+	}
+	transitions = fmt.Sprint(transitions, " ", r.RequestURI)
+	id.Set("transitions", transitions)
+
+	msg := fmt.Sprintf("%v", transitions)
+	msg = strings.ReplaceAll(msg, " ", "<br>")
+	html = fmt.Sprint(header, msg, footer)
+
+	fmt.Fprint(w, html)
+}
+
+func favHandler(w http.ResponseWriter, r *http.Request) {
+	// dummy
+}
+
+func main() {
+	port := ":8080"
+
+	http.HandleFunc("/favicon.ico", favHandler)
+	http.HandleFunc("/", homeHandler)
+
+	http.ListenAndServe(port, nil)
+}
+
+```
+
+Run:
+> go mod tidy
+
+Start the server:
+> go run .
+
+Visit site
+> http://localhost:8080/
+
+Now you can follow the links on this site and see how the site saves and shows your browsing history.
+
+### Example 3:
+
+*This example shows a simple, realistic site that uses the session mechanism.*
+
+Create an example folder and navigate to it.
+
+Create a module for your application
+> go mod init example3
+
+Install GoSession
+> go get github.com/Kwynto/gosession
+
+**Now you need to create 11 files.**
+
+Create a `./cmd/web/main.go` file and save this code into it:
+```
+package main
+
+import (
+	"flag"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+)
+
+// Creating an `application` structure to store the dependencies of the entire web application.
+type application struct {
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	templateCache map[string]*template.Template
+}
+
+// Structure for configuration
+type Config struct {
+	Addr      string
+	StaticDir string
+}
+
+func main() {
+	// Reading flags from the application launch bar.
+	cfg := new(Config)
+	flag.StringVar(&cfg.Addr, "addr", ":8080", "HTTP network address")
+	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
+	flag.Parse()
+
+	// Creating loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// Initialize the template cache.
+	templateCache, err := newTemplateCache("./ui/html/")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	// Initialize the structure with the application dependencies.
+	app := &application{
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		templateCache: templateCache,
+	}
+
+	// Server structure with address, logger and routing
+	srv := &http.Server{
+		Addr:     cfg.Addr,
+		ErrorLog: errorLog,
+		Handler:  app.routes(),
+	}
+
+	// Starting the server
+	app.infoLog.Printf("Start server: %s", cfg.Addr)
+	err = srv.ListenAndServe()
+	app.errorLog.Fatal(err)
+}
+
+```
+
+Create a `./cmd/web/templates.go` file and save this code into it:
+```
+package main
+
+import (
+	"html/template"
+	"path/filepath"
+)
+
+// Structure for the data template
+type templateData struct {
+	User        string
+	Hash        string
+	Cart        []string
+	Transitions []string
+}
+
+func newTemplateCache(dir string) (map[string]*template.Template, error) {
+	cache := map[string]*template.Template{}
+
+	// We use the filepath.Glob function to get a slice of all file paths with the extension '.page.tmpl'.
+	pages, err := filepath.Glob(filepath.Join(dir, "*.page.tmpl"))
+	if err != nil {
+		return nil, err
+	}
+
+	// We iterate through the template file from each page.
+	for _, page := range pages {
+		// Extracting the final file name
+		name := filepath.Base(page)
+
+		// Processing the iterated template file.
+		ts, err := template.ParseFiles(page)
+		if err != nil {
+			return nil, err
+		}
+
+		// We use the ParseGlob method to add all the wireframe templates.
+		ts, err = ts.ParseGlob(filepath.Join(dir, "*.layout.tmpl"))
+		if err != nil {
+			return nil, err
+		}
+
+		// We use the ParseGlob method to add all auxiliary templates.
+		ts, err = ts.ParseGlob(filepath.Join(dir, "*.partial.tmpl"))
+		if err != nil {
+			return nil, err
+		}
+
+		// Adding the resulting set of templates to the cache using the page name
+		cache[name] = ts
+	}
+
+	// We return the received map.
+	return cache, nil
+}
+
+```
+
+Create a `./cmd/web/routes.go` file and save this code into it:
+```
+package main
+
+import (
+	"net/http"
+	"path/filepath"
+)
+
+type neuteredFileSystem struct {
+	fs http.FileSystem
+}
+
+// Blocking direct access to the file system
+func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, _ := f.Stat()
+	if s.IsDir() {
+		index := filepath.Join(path, "index.html")
+		if _, err := nfs.fs.Open(index); err != nil {
+			closeErr := f.Close()
+			if closeErr != nil {
+				return nil, closeErr
+			}
+
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
+
+func (app *application) routes() *http.ServeMux {
+	// Routes
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/auth", app.authPage)
+	mux.HandleFunc("/logout", app.outPage)
+	mux.HandleFunc("/product1", app.buyPage)
+	mux.HandleFunc("/product2", app.buyPage)
+	mux.HandleFunc("/product3", app.buyPage)
+
+	fileServer := http.FileServer(neuteredFileSystem{http.Dir("./ui/static")})
+	mux.Handle("/static", http.NotFoundHandler())
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+
+	return mux
+}
+
+```
+
+Create a `./cmd/web/handlers.go` file and save this code into it:
+```
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/Kwynto/gosession"
+)
+
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		app.notFound(w)
+		return
+	}
+
+	tD := &templateData{User: "", Hash: "", Cart: []string{""}, Transitions: []string{""}}
+
+	id := gosession.Start(&w, r)
+
+	transitions := id.Get("transitions")
+	if transitions == nil {
+		transitions = ""
+	}
+	transitions = fmt.Sprint(transitions, " ", r.RequestURI)
+	id.Set("transitions", transitions)
+	tStr := fmt.Sprintf("%v", transitions)
+	tStrs := strings.Split(tStr, " ")
+	tD.Transitions = tStrs
+
+	cart := id.Get("cart")
+	if cart == nil {
+		cart = ""
+		id.Set("cart", fmt.Sprint(cart))
+		tD.Cart = []string{"There's nothing here yet."}
+	} else {
+		sCart := fmt.Sprint(cart)
+		prods := strings.Split(sCart, " ")
+		tD.Cart = prods
+	}
+
+	username := id.Get("username")
+	if username != nil {
+		tD.User = fmt.Sprint(username)
+		app.render(w, r, "homeauth.page.tmpl", tD)
+	} else {
+		app.render(w, r, "home.page.tmpl", tD)
+	}
+}
+
+func (app *application) authPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		app.clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	username := r.FormValue("login")
+	password := r.FormValue("password")
+
+	id := gosession.Start(&w, r)
+
+	if username != "" && password != "" {
+		pasHash := app.getMd5(password)
+		id.Set("username", username)
+		id.Set("hash", pasHash)
+	}
+
+	transitions := id.Get("transitions")
+	if transitions == nil {
+		transitions = ""
+	}
+	transitions = fmt.Sprint(transitions, " ", r.RequestURI)
+	id.Set("transitions", transitions)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) outPage(w http.ResponseWriter, r *http.Request) {
+	id := gosession.Start(&w, r)
+	id.Remove("username")
+
+	transitions := id.Get("transitions")
+	if transitions == nil {
+		transitions = ""
+	}
+	transitions = fmt.Sprint(transitions, " ", r.RequestURI)
+	id.Set("transitions", transitions)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) buyPage(w http.ResponseWriter, r *http.Request) {
+	tD := &templateData{User: "", Hash: "", Cart: []string{""}, Transitions: []string{""}}
+
+	id := gosession.Start(&w, r)
+
+	transitions := id.Get("transitions")
+	if transitions == nil {
+		transitions = ""
+	}
+	transitions = fmt.Sprint(transitions, " ", r.RequestURI)
+	id.Set("transitions", transitions)
+	tStr := fmt.Sprintf("%v", transitions)
+	tStrs := strings.Split(tStr, " ")
+	tD.Transitions = tStrs
+
+	cart := id.Get("cart")
+	if cart == nil {
+		cart = ""
+	}
+	sCart := app.addProduct(fmt.Sprint(cart), app.convertProduct(r.RequestURI))
+	id.Set("cart", sCart)
+	prods := strings.Split(sCart, " ")
+	tD.Cart = prods
+
+	username := id.Get("username")
+	if username != nil {
+		tD.User = fmt.Sprint(username)
+		app.render(w, r, "homeauth.page.tmpl", tD)
+	} else {
+		app.render(w, r, "home.page.tmpl", tD)
+	}
+}
+
+```
+
+Create a `./cmd/web/helpers.go` file and save this code into it:
+```
+package main
+
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
+	"net/http"
+	"runtime/debug"
+	"strconv"
+	"strings"
+)
+
+func (app *application) getMd5(text string) string {
+	h := md5.New()
+	h.Write([]byte(text))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (app *application) convertProduct(uri string) string {
+	res := strings.Trim(uri, "/")
+	res = strings.ToUpper(res)
+	return res
+}
+
+func (app *application) addProduct(text string, plus string) string {
+	var newText string = ""
+	var newProd string = ""
+	var isIt bool = false
+
+	if text == "" {
+		newText = fmt.Sprintf("%s=%d ", plus, 1)
+		return newText
+	}
+
+	splitTest := strings.Split(text, " ")
+	for _, val := range splitTest {
+		if val != "" {
+			splitVal := strings.Split(val, "=")
+			prodName := splitVal[0]
+			prodCount, _ := strconv.Atoi(splitVal[1])
+			if prodName == plus {
+				isIt = true
+				prodCount += 1
+				newProd = fmt.Sprintf("%s=%d", prodName, prodCount)
+				newText = fmt.Sprintf("%s%s ", newText, newProd)
+			} else {
+				newText = fmt.Sprintf("%s%s ", newText, val)
+			}
+		}
+	}
+
+	if !isIt {
+		newProd = fmt.Sprintf("%s=%d", plus, 1)
+		newText = fmt.Sprintf("%s%s ", newText, newProd)
+	}
+
+	return newText
+}
+
+func (app *application) serverError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	app.errorLog.Output(2, trace)
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+}
+
+func (app *application) clientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
+}
+
+func (app *application) notFound(w http.ResponseWriter) {
+	app.clientError(w, http.StatusNotFound)
+}
+
+func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
+	// We extract the corresponding set of templates from the cache, depending on the page name
+	ts, ok := app.templateCache[name]
+	if !ok {
+		app.serverError(w, fmt.Errorf("template %s not exist", name))
+		return
+	}
+
+	// Render template files by passing dynamic data from the `td` variable.
+	err := ts.Execute(w, td)
+	if err != nil {
+		app.serverError(w, err)
+	}
+}
+
+```
+
+Create a `./ui/html/base.layout.tmpl` file and save this code into it:
+```
+{{define "base"}}
+<!doctype html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8'>
+    <title>{{template "title" .}}</title>
+    <link rel='stylesheet' href='/static/css/main.css'>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700'>
+</head>
+<body>
+    <header>
+        <h1><a href='/'>Home Page</a></h1>
+    </header>
+    <nav>
+        <a href='/'>Home Page</a>
+    </nav>
+    <main>
+        {{template "main" .}}
+    </main>
+    {{template "footer" .}}
+    <script src="/static/js/main.js" type="text/javascript"></script>
+</body>
+</html>
+{{end}}
+```
+
+Create a `./ui/html/footer.partial.tmpl` file and save this code into it:
+```
+{{define "footer"}}
+<footer>This is the third example of a <strong>GoLang</strong> site using <strong>GoSession</strong>.</footer>
+{{end}}
+```
+
+Create a `./ui/html/home.page.tmpl` file and save this code into it:
+```
+{{template "base" .}}
+
+{{define "title"}}Home Page{{end}}
+
+{{define "main"}}
+	<table>
+		<tr>
+			<td rowspan="2" valign="top">
+				<p>
+					<h2>Authorization</h2>
+					<form action="/auth" method="post" class="form-horizontal">
+						<input name="login" type="text" value="" placeholder="Login" required pattern="^[a-zA-Z0-9_-]+$">
+						<input name="password" type="password" value="" placeholder="Password" required pattern="^[a-zA-Z0-9]+$">
+						<button name="signin" type="submit">Auth button</button>
+					</form>
+					<br><br>
+				</p>
+				<p>
+					<h2>Links:</h2>
+					<a href="/product1">Buy Product No. 1</a><br><br>
+					<a href="/product2">Buy Product No. 2</a><br><br>
+					<a href="/product3">Buy Product No. 3</a><br><br>
+				</p>
+			</td>
+			<td width="250px">
+				<p>
+					<h2>Shopping cart</h2>
+					{{ range $key, $pr := .Cart }}
+						{{ $pr }}<br>
+					{{end}}
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<p>
+					<h2>Browsing history:</h2>
+					{{ range $key, $tr := .Transitions }}
+						{{ $tr }}<br>
+					{{end}}
+				</p>
+			</td>
+		</tr>
+	</table>
+{{end}}
+```
+
+Create a `./ui/html/homeauth.page.tmpl` file and save this code into it:
+```
+{{template "base" .}}
+
+{{define "title"}}Home Page{{end}}
+
+{{define "main"}}
+	<table>
+		<tr>
+			<td rowspan="2" valign="top">
+				<p>
+					<h3>You are logged in as: </h3>{{.User}} <a href="/logout">Log Out</a><br><br>
+				</p>
+				<p>
+					<h2>Links:</h2>
+					<a href="/product1">Buy Product No. 1</a><br><br>
+					<a href="/product2">Buy Product No. 2</a><br><br>
+					<a href="/product3">Buy Product No. 3</a><br><br>
+				</p>
+			</td>
+			<td width="250px">
+				<p>
+					<h2>Shopping cart</h2>
+					{{ range $key, $pr := .Cart }}
+						{{ $pr }}<br>
+					{{end}}
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<p>
+					<h2>Browsing history:</h2>
+					{{ range $key, $tr := .Transitions }}
+						{{ $tr }}<br>
+					{{end}}
+				</p>
+			</td>
+		</tr>
+	</table>
+{{end}}
+```
+
+Create a `./ui/static/css/main.css` file and save this code into it:
+```
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    font-family: "Ubuntu Mono", monospace;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    line-height: 1.5;
+    background-color: #F1F3F6;
+    color: #34495E;
+    overflow-y: scroll;
+}
+
+header, nav, main, footer {
+    padding: 2px calc((100% - 800px) / 2) 0;
+}
+
+main {
+    margin-top: 54px;
+    margin-bottom: 54px;
+    min-height: calc(100vh - 345px);
+    overflow: auto;
+}
+
+h1 a {
+    font-size: 36px;
+    font-weight: bold;
+    background-image: url("/static/img/logo.png");
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
+    height: 36px;
+    padding-left: 50px;
+    position: relative;
+}
+
+h1 a:hover {
+    text-decoration: none;
+    color: #34495E;
+}
+
+h2 {
+    font-size: 22px;
+    margin-bottom: 36px;
+    position: relative;
+    top: -9px;
+}
+
+a {
+    color: #62CB31;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #4EB722;
+    text-decoration: underline;
+}
+
+textarea, input:not([type="submit"]) {
+    font-size: 18px;
+    font-family: "Ubuntu Mono", monospace;
+}
+
+header {
+    background-image: -webkit-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
+    background-image: -moz-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
+    background-image: -ms-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
+    background-image: linear-gradient(to right, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
+    background-size: 100% 6px;
+    background-repeat: no-repeat;
+    border-bottom: 1px solid #E4E5E7;
+    overflow: auto;
+    padding-top: 33px;
+    padding-bottom: 27px;
+    text-align: center;
+}
+
+header a {
+    color: #34495E;
+    text-decoration: none;
+}
+
+nav {
+    border-bottom: 1px solid #E4E5E7;
+    padding-top: 17px;
+    padding-bottom: 15px;
+    background: #F7F9FA;
+    height: 60px;
+    color: #6A6C6F;
+}
+
+nav a {
+    margin-right: 1.5em;
+    display: inline-block;
+}
+
+nav form {
+    display: inline-block;
+    margin-left: 1.5em;
+}
+
+nav div {
+    width: 50%;
+    float: left;
+}
+
+nav div:last-child {
+    text-align: right;
+}
+
+nav div:last-child a {
+    margin-left: 1.5em;
+    margin-right: 0;
+}
+
+nav a.live {
+    color: #34495E;
+    cursor: default;
+}
+
+nav a.live:hover {
+    text-decoration: none;
+}
+
+nav a.live:after {
+    content: '';
+    display: block;
+    position: relative;
+    left: calc(50% - 7px);
+    top: 9px;
+    width: 14px;
+    height: 14px;
+    background: #F7F9FA;
+    border-left: 1px solid #E4E5E7;
+    border-bottom: 1px solid #E4E5E7;
+    -moz-transform: rotate(45deg);
+    -webkit-transform: rotate(-45deg);
+}
+
+form div {
+    margin-bottom: 18px;
+}
+
+form div:last-child {
+    border-top: 1px dashed #E4E5E7;
+}
+
+form input[type="radio"] {
+    position: relative;
+    top: 2px;
+    margin-left: 18px;
+}
+
+form input[type="text"], form input[type="password"], form input[type="email"] {
+    padding: 0.75em 18px;
+    width: 100%;
+}
+
+form input[type=text], form input[type="password"], form input[type="email"], textarea {
+    color: #6A6C6F;
+    background: #FFFFFF;
+    border: 1px solid #E4E5E7;
+    border-radius: 3px;
+}
+
+form label {
+    display: inline-block;
+    margin-bottom: 9px;
+}
+
+.error {
+    color: #C0392B;
+    font-weight: bold;
+    display: block;
+}
+
+.error + textarea, .error + input {
+    border-color: #C0392B !important;
+    border-width: 2px !important;
+}
+
+textarea {
+    padding: 18px;
+    width: 100%;
+    height: 266px;
+}
+
+button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #5865f4;
+    color: white;
+}
+
+.snippet {
+    background-color: #FFFFFF;
+    border: 1px solid #E4E5E7;
+    border-radius: 3px;
+}
+
+.snippet pre {
+    padding: 18px;
+    border-top: 1px solid #E4E5E7;
+    border-bottom: 1px solid #E4E5E7;
+}
+
+.snippet .metadata {
+    background-color: #F7F9FA;
+    color: #6A6C6F;
+    padding: 0.75em 18px;
+    overflow: auto;
+}
+
+.snippet .metadata span {
+    float: right;
+}
+
+.snippet .metadata strong {
+    color: #34495E;
+}
+
+.snippet .metadata time {
+    display: inline-block;
+}
+
+.snippet .metadata time:first-child {
+    float: left;
+}
+
+.snippet .metadata time:last-child {
+    float: right;
+}
+
+div.flash {
+    color: #FFFFFF;
+    font-weight: bold;
+    background-color: #34495E;
+    padding: 18px;
+    margin-bottom: 36px;
+    text-align: center;
+}
+
+div.error {
+    color: #FFFFFF;
+    background-color: #C0392B;
+    padding: 18px;
+    margin-bottom: 36px;
+    font-weight: bold;
+    text-align: center;
+}
+
+table {
+    background: white;
+    border: 1px solid #E4E5E7;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    text-align: left;
+    padding: 9px 18px;
+}
+
+th:last-child, td:last-child {
+    text-align: right;
+    color: #6A6C6F;
+}
+
+tr {
+    border-bottom: 1px solid #E4E5E7;
+}
+
+tr:nth-child(2n) {
+    background-color: #F7F9FA;
+}
+
+footer {
+    border-top: 1px solid #E4E5E7;
+    padding-top: 17px;
+    padding-bottom: 15px;
+    background: #F7F9FA;
+    height: 60px;
+    color: #6A6C6F;
+    text-align: center;
+}
+
+```
+
+Create a `./ui/static/js/main.js` file and save this code into it:
+```
+var navLinks = document.querySelectorAll("nav a");
+for (var i = 0; i < navLinks.length; i++) {
+	var link = navLinks[i]
+	if (link.getAttribute('href') == window.location.pathname) {
+		link.classList.add("live");
+		break;
+	}
+}
+```
+
+Run:
+> go mod tidy
+
+Start the server:
+> go run ./cmd/web/
+
+Visit site
+> http://localhost:8080/
+
+Now you can follow the links on this site.
 
 ## About the package
 
