@@ -99,9 +99,11 @@ func cleaningSessions() {
 // name - session variable name
 // value - directly variable in session
 func (id SessionId) Set(name string, value interface{}) {
-	ses := allSessions[id]
-	ses.data[name] = value
-	allSessions[id] = ses
+	ses, ok := allSessions[id]
+	if ok {
+		ses.data[name] = value
+		allSessions[id] = ses
+	}
 }
 
 // The GetAll() SessionId-method to get all client variables from the session system
@@ -124,9 +126,11 @@ func (id SessionId) Destroy(w *http.ResponseWriter) {
 
 // The Remove(name) SessionId-method to remove one client variable from the session by its name
 func (id SessionId) Remove(name string) {
-	ses := allSessions[id]
-	delete(ses.data, name)
-	allSessions[id] = ses
+	ses, ok := allSessions[id]
+	if ok {
+		delete(ses.data, name)
+		allSessions[id] = ses
+	}
 }
 
 // The SetSetings(settings) sets new settings for the session mechanism
@@ -139,8 +143,8 @@ func SetSetings(setings GoSessionSetings) {
 // This function must be run at the very beginning of the http.Handler
 func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
-	ses := allSessions[id]
-	if ses.data == nil {
+	ses, ok := allSessions[id]
+	if !ok {
 		ses.data = make(Session, 0)
 	}
 	presently := time.Now().Unix()

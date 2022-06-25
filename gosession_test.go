@@ -251,7 +251,7 @@ func Test_Get(t *testing.T) {
 		data := make(Session)
 
 		name = "test name"
-		switch rand.Intn(3) {
+		switch rand.Intn(4) {
 		case 0:
 			value = true
 		case 1:
