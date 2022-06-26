@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 // TODO: Написать StartSecure для замены идентификатора сессии налету
-// TODO: Сделать allSession потокобезопасной
 
 const (
 	GOSESSION_COOKIE_NAME        string        = "SessionId" // Name for session cookies
@@ -50,6 +50,8 @@ var setingsSession = GoSessionSetings{
 	TimerCleaning: GOSESSION_TIMER_FOR_CLEANING,
 }
 
+var block sync.RWMutex
+
 // The generateId() generates a new session id in a random, cryptographically secure manner
 func generateId() SessionId {
 	b := make([]byte, 32)
@@ -86,51 +88,87 @@ func deleteCookie(w *http.ResponseWriter) {
 // The cleaningSessions() periodically cleans up the server's session storage
 func cleaningSessions() {
 	presently := time.Now().Unix()
+	block.Lock()
 	for id, ses := range allSessions {
 		if ses.expiration < presently {
 			delete(allSessions, id)
 		}
 	}
+	block.Unlock()
 	// log.Println("Session storage has been serviced.")
 	time.AfterFunc(setingsSession.TimerCleaning, cleaningSessions)
+}
+
+// The writeS() method safely writes data to the session store
+func (id SessionId) writeS(iSes internalSession) {
+	block.Lock()
+	allSessions[id] = iSes
+	block.Unlock()
+}
+
+// The readS() method safely reads data from the session store.
+func (id SessionId) readS() (internalSession, bool) {
+	block.RLock()
+	defer block.RUnlock()
+	ses, ok := allSessions[id]
+	if !ok {
+		return internalSession{}, false
+	}
+	return ses, true
+}
+
+// The destroyS() method safely deletes the entire session from the store.
+func (id SessionId) destroyS() {
+	block.Lock()
+	delete(allSessions, id)
+	block.Unlock()
+}
+
+// The deleteS() method safely deletes one client variable from the session by its name
+// name - session variable name
+func (id SessionId) deleteS(name string) {
+	block.Lock()
+	ses, ok := allSessions[id]
+	if ok {
+		delete(ses.data, name)
+		allSessions[id] = ses
+	}
+	block.Unlock()
 }
 
 // The Set(name, value) SessionId-method to set the client variable to be stored in the session system
 // name - session variable name
 // value - directly variable in session
 func (id SessionId) Set(name string, value interface{}) {
-	ses, ok := allSessions[id]
+	ses, ok := id.readS()
 	if ok {
 		ses.data[name] = value
-		allSessions[id] = ses
+		id.writeS(ses)
 	}
 }
 
 // The GetAll() SessionId-method to get all client variables from the session system
 func (id SessionId) GetAll() Session {
-	return allSessions[id].data
+	ses, _ := id.readS()
+	return ses.data
 }
 
 // The Get(name) SessionId-method to get a specific client variable from the session system
 // name - session variable name
 func (id SessionId) Get(name string) interface{} {
-	ses := allSessions[id]
+	ses, _ := id.readS()
 	return ses.data[name]
 }
 
 // The Destroy(w) SessionId-method to remove the entire client session
 func (id SessionId) Destroy(w *http.ResponseWriter) {
-	delete(allSessions, id)
+	id.destroyS()
 	deleteCookie(w)
 }
 
 // The Remove(name) SessionId-method to remove one client variable from the session by its name
 func (id SessionId) Remove(name string) {
-	ses, ok := allSessions[id]
-	if ok {
-		delete(ses.data, name)
-		allSessions[id] = ses
-	}
+	id.deleteS(name)
 }
 
 // The SetSetings(settings) sets new settings for the session mechanism
@@ -143,13 +181,13 @@ func SetSetings(setings GoSessionSetings) {
 // This function must be run at the very beginning of the http.Handler
 func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
-	ses, ok := allSessions[id]
+	ses, ok := id.readS()
 	if !ok {
 		ses.data = make(Session, 0)
 	}
 	presently := time.Now().Unix()
 	ses.expiration = presently + setingsSession.Expiration
-	allSessions[id] = ses
+	id.writeS(ses)
 	return id
 }
 
