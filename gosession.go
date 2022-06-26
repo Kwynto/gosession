@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-// TODO: Написать StartSecure для замены идентификатора сессии налету
-
 const (
 	GOSESSION_COOKIE_NAME        string        = "SessionId" // Name for session cookies
 	GOSESSION_EXPIRATION         int64         = 43_200      // Max age is 12 hours.
@@ -75,7 +73,7 @@ func getOrSetCookie(w *http.ResponseWriter, r *http.Request) SessionId {
 	return SessionId(data.Value)
 }
 
-// The deleteCookie(w) deletes the session cookie
+// The deleteCookie(w) function deletes the session cookie
 func deleteCookie(w *http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:   setingsSession.CookieName,
@@ -85,7 +83,7 @@ func deleteCookie(w *http.ResponseWriter) {
 	http.SetCookie(*w, cookie)
 }
 
-// The cleaningSessions() periodically cleans up the server's session storage
+// The cleaningSessions() function periodically cleans up the server's session storage
 func cleaningSessions() {
 	presently := time.Now().Unix()
 	block.Lock()
@@ -177,7 +175,7 @@ func SetSetings(setings GoSessionSetings) {
 	setingsSession = setings
 }
 
-// The Start(w, r) starts the session and returns the SessionId to the handler for further use of the session mechanism.
+// The Start(w, r) function starts the session and returns the SessionId to the handler for further use of the session mechanism.
 // This function must be run at the very beginning of the http.Handler
 func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	id := getOrSetCookie(w, r)
@@ -189,6 +187,33 @@ func Start(w *http.ResponseWriter, r *http.Request) SessionId {
 	ses.expiration = presently + setingsSession.Expiration
 	id.writeS(ses)
 	return id
+}
+
+// The StartSecure(w, r) function starts the session or changes the session ID and sets new cookie to the client.
+// This function must be run at the very beginning of the http.Handler
+func StartSecure(w *http.ResponseWriter, r *http.Request) SessionId {
+	id := getOrSetCookie(w, r)
+	ses, ok := id.readS()
+	if !ok {
+		ses.data = make(Session, 0)
+		presently := time.Now().Unix()
+		ses.expiration = presently + setingsSession.Expiration
+		id.writeS(ses)
+		return id
+	} else {
+		id.destroyS()
+		id = generateId()
+		cookie := &http.Cookie{
+			Name:   setingsSession.CookieName,
+			Value:  string(id),
+			MaxAge: 0,
+		}
+		http.SetCookie(*w, cookie)
+		presently := time.Now().Unix()
+		ses.expiration = presently + setingsSession.Expiration
+		id.writeS(ses)
+		return id
+	}
 }
 
 // Package initialization
