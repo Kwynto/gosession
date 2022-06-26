@@ -60,6 +60,23 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
+Alternatively, you can use the `gosession.StartSecure(w *http.ResponseWriter, r *http.Request)` function instead of `gosession.Start(w, r)`.  
+The `StartSecure()` function replaces the session ID each time it is accessed, which reduces the possibility of ID hijacking.  
+The use of these functions is exactly the same.  
+```
+id := gosession.StartSecure(&w, r)
+```
+
+You need to call the `gosession.StartSecure(w *http.ResponseWriter, r *http.Request)` function from the handler  
+```
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+  id := gosession.StartSecure(&w, r) // Get the storage ID for a specific user
+
+  html := "<html><head><title>Title</title></head><body>%s</body></html>"
+  fmt.Fprintf(w, html, id)
+}
+```
+
 Once you have a store ID, you can write variables to the store, read them, and delete them.
 
 Recording is done using the `(id SessionId) Set(name string, value interface{})` method
@@ -663,7 +680,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	tD := &templateData{User: "", Hash: "", Cart: []string{""}, Transitions: []string{""}}
 
-	id := gosession.Start(&w, r)
+	id := gosession.StartSecure(&w, r)
 
 	transitions := id.Get("transitions")
 	if transitions == nil {
@@ -705,7 +722,7 @@ func (app *application) authPage(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("login")
 	password := r.FormValue("password")
 
-	id := gosession.Start(&w, r)
+	id := gosession.StartSecure(&w, r)
 
 	if username != "" && password != "" {
 		pasHash := app.getMd5(password)
@@ -724,7 +741,7 @@ func (app *application) authPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) outPage(w http.ResponseWriter, r *http.Request) {
-	id := gosession.Start(&w, r)
+	id := gosession.StartSecure(&w, r)
 	id.Remove("username")
 
 	transitions := id.Get("transitions")
@@ -740,7 +757,7 @@ func (app *application) outPage(w http.ResponseWriter, r *http.Request) {
 func (app *application) buyPage(w http.ResponseWriter, r *http.Request) {
 	tD := &templateData{User: "", Hash: "", Cart: []string{""}, Transitions: []string{""}}
 
-	id := gosession.Start(&w, r)
+	id := gosession.StartSecure(&w, r)
 
 	transitions := id.Get("transitions")
 	if transitions == nil {

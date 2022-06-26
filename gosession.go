@@ -1,4 +1,5 @@
 // This is quick session for net/http in golang.
+// This package is perhaps the best implementation of the session mechanism, at least it tries to become one.
 package gosession
 
 import (
