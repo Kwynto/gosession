@@ -134,9 +134,9 @@ func (id SessionId) deleteS(name string) {
 	block.Unlock()
 }
 
-// The Set(name, value) SessionId-method to set the client variable to be stored in the session system
-// name - session variable name
-// value - directly variable in session
+// The Set(name, value) SessionId-method to set the client variable to be stored in the session system.
+// name - session variable name.
+// value - directly variable in session.
 func (id SessionId) Set(name string, value interface{}) {
 	ses, ok := id.readS()
 	if ok {
@@ -151,7 +151,7 @@ func (id SessionId) GetAll() Session {
 	return ses.data
 }
 
-// The Get(name) SessionId-method to get a specific client variable from the session system
+// The Get(name) SessionId-method to get a specific client variable from the session system.
 // name - session variable name
 func (id SessionId) Get(name string) interface{} {
 	ses, _ := id.readS()
@@ -169,7 +169,7 @@ func (id SessionId) Remove(name string) {
 	id.deleteS(name)
 }
 
-// The SetSetings(settings) sets new settings for the session mechanism
+// The SetSetings(settings) sets new settings for the session mechanism.
 // setings - gosession.GoSessionSetings public type variable for setting new session settings
 func SetSetings(setings GoSessionSetings) {
 	setingsSession = setings
