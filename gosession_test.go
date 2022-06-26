@@ -172,6 +172,76 @@ func Test_cleaningSessions(t *testing.T) {
 	}
 }
 
+func Test_writeS(t *testing.T) {
+	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
+		ses := internalSession{
+			expiration: time.Now().Unix() + setingsSession.Expiration,
+			data:       make(Session),
+		}
+		id := generateId()
+		id.writeS(ses)
+		if allSessions[id].expiration != ses.expiration {
+			t.Error("Writing error. Session is not equal.")
+		}
+	}
+}
+
+func Test_readS(t *testing.T) {
+	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
+		ses := internalSession{
+			expiration: time.Now().Unix() + setingsSession.Expiration,
+			data:       make(Session),
+		}
+		id := generateId()
+		allSessions[id] = ses
+		res, _ := id.readS()
+		if res.expiration != ses.expiration {
+			t.Error("Reading error. Session is not equal.")
+		}
+
+		delete(allSessions, id)
+		_, ok := id.readS()
+		if ok {
+			t.Error("Reading error. Was reaing wrong session.")
+		}
+	}
+}
+
+func Test_destroyS(t *testing.T) {
+	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
+		ses := internalSession{
+			expiration: time.Now().Unix() + setingsSession.Expiration,
+			data:       make(Session),
+		}
+		id := generateId()
+		id.writeS(ses)
+		id.destroyS()
+		_, ok := id.readS()
+		if ok {
+			t.Error("Destroy error. Was reading deleted session.")
+		}
+	}
+}
+
+func Test_deleteS(t *testing.T) {
+	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
+		ses := internalSession{
+			expiration: time.Now().Unix() + setingsSession.Expiration,
+			data:       make(Session),
+		}
+		ses.data["name"] = "test string"
+		id := generateId()
+		id.writeS(ses)
+		// id.destroyS()
+		id.deleteS("name")
+
+		_, ok := allSessions[id].data["name"]
+		if ok {
+			t.Error("Delete error. Was reading deleted variable.")
+		}
+	}
+}
+
 func Test_Set(t *testing.T) {
 	var value interface{}
 	rand.Seed(time.Now().Unix())
@@ -441,6 +511,52 @@ func Test_Start(t *testing.T) {
 	}
 }
 
+func Test_StartSecure(t *testing.T) {
+	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
+		var id1 SessionId
+		var id2 SessionId
+		handler1 := func(w http.ResponseWriter, r *http.Request) {
+			id1 = StartSecure(&w, r) // calling the tested function
+			io.WriteString(w, "<html><head><title>Title</title></head><body>Body</body></html>")
+		}
+		handler2 := func(w http.ResponseWriter, r *http.Request) {
+			id2 = StartSecure(&w, r) // calling the tested function
+			io.WriteString(w, "<html><head><title>Title</title></head><body>Body</body></html>")
+		}
+
+		w1 := httptest.NewRecorder()
+		r1 := httptest.NewRequest("GET", "/", nil)
+		handler1(w1, r1)
+
+		status := w1.Code
+		// work check
+		if status != http.StatusOK {
+			t.Errorf("Handler returned status: %v", status)
+		}
+
+		cookies := w1.Result().Cookies()
+		var cookie *http.Cookie
+		for _, v := range cookies {
+			cookie = v
+		}
+		w2 := httptest.NewRecorder()
+		r2 := httptest.NewRequest("GET", "/", nil)
+		r2.AddCookie(cookie)
+		handler2(w2, r2)
+
+		status = w2.Code
+		// work check
+		if status != http.StatusOK {
+			t.Errorf("Handler returned status: %v", status)
+		}
+
+		// work check
+		if id1 == id2 {
+			t.Errorf("Server and client IDs are equal:\n server: %v\n client: %v\n", id1, id2)
+		}
+	}
+}
+
 // ----------------------
 // Functions benchmarking
 // ----------------------
@@ -483,6 +599,61 @@ func Benchmark_deleteCookie(b *testing.B) {
 func Benchmark_cleaningSessions(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		cleaningSessions() // calling the tested function
+	}
+}
+
+func Benchmark_writeS(b *testing.B) {
+	ses := internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       make(Session),
+	}
+	ses.data["name"] = "test value"
+	id := generateId()
+
+	for i := 0; i < b.N; i++ {
+		id.writeS(ses) // calling the tested function
+	}
+}
+
+func Benchmark_readS(b *testing.B) {
+	ses := internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       make(Session),
+	}
+	ses.data["name"] = "test value"
+	id := generateId()
+	id.writeS(ses)
+
+	for i := 0; i < b.N; i++ {
+		id.readS() // calling the tested function
+	}
+}
+
+func Benchmark_destroyS(b *testing.B) {
+	ses := internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       make(Session),
+	}
+	ses.data["name"] = "test value"
+	id := generateId()
+	id.writeS(ses)
+
+	for i := 0; i < b.N; i++ {
+		id.destroyS() // calling the tested function
+	}
+}
+
+func Benchmark_deleteS(b *testing.B) {
+	ses := internalSession{
+		expiration: time.Now().Unix() + setingsSession.Expiration,
+		data:       make(Session),
+	}
+	ses.data["name"] = "test value"
+	id := generateId()
+	id.writeS(ses)
+
+	for i := 0; i < b.N; i++ {
+		id.deleteS("name") // calling the tested function
 	}
 }
 
@@ -596,6 +767,17 @@ func Benchmark_SetSetings(b *testing.B) {
 func Benchmark_Start(b *testing.B) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		Start(&w, r) // calling the tested function
+	}
+	r := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	for i := 0; i < b.N; i++ {
+		handler(w, r)
+	}
+}
+
+func Benchmark_StartSecure(b *testing.B) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		StartSecure(&w, r) // calling the tested function
 	}
 	r := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
