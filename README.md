@@ -34,24 +34,24 @@ Download and install GoSession
 > go get github.com/Kwynto/gosession
 
 Now you can add the GoSession package to your Go-code file, for example in `main.go`
-```
+```go
 import "github.com/Kwynto/gosession"
 ```
 
 ## How to use GoSession
 To use the GoSession package, you need to import it into your code.
-```
+```go
 import "github.com/Kwynto/gosession"
 ```
 
 All operations for working with sessions must be called from handlers.  
 Each time you start working with the session store, you need to call `gosession.Start(w *http.ResponseWriter, r *http.Request)`, since this function returns the identifier of the store and allows you to access the elements of the store through the identifier.
-```
+```go
 id := gosession.Start(&w, r)
 ```
 
 You need to call the `gosession.Start(w *http.ResponseWriter, r *http.Request)` function from the handler
-```
+```go
 func rootHandler(w http.ResponseWriter, r *http.Request) {
   id := gosession.Start(&w, r) // Get the storage ID for a specific user
 
@@ -63,12 +63,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 Alternatively, you can use the `gosession.StartSecure(w *http.ResponseWriter, r *http.Request)` function instead of `gosession.Start(w, r)`.  
 The `StartSecure()` function replaces the session ID each time it is accessed, which reduces the possibility of ID hijacking.  
 The use of these functions is exactly the same.  
-```
+```go
 id := gosession.StartSecure(&w, r)
 ```
 
 You need to call the `gosession.StartSecure(w *http.ResponseWriter, r *http.Request)` function from the handler  
-```
+```go
 func rootHandler(w http.ResponseWriter, r *http.Request) {
   id := gosession.StartSecure(&w, r) // Get the storage ID for a specific user
 
@@ -80,12 +80,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 Once you have a store ID, you can write variables to the store, read them, and delete them.
 
 Recording is done using the `(id SessionId) Set(name string, value interface{})` method
-```
+```go
 id.Set("name variable", anyVariable)
 ```
 
 In the handler it looks like this
-```
+```go
 func writeHandler(w http.ResponseWriter, r *http.Request) {
   name := "username"
   username := "JohnDow"
@@ -100,16 +100,16 @@ func writeHandler(w http.ResponseWriter, r *http.Request) {
 
 Reading is done by `(id SessionId) Get(name string) interface{}` method for one variable  
 and the `(id SessionId) GetAll() Session` method to read all session variables
-```
+```go
 anyVariable := id.Get("name variable")
 ```
 
-```
+```go
 allVariables := id.GetAll()
 ```
 
 In the handler it looks like this
-```
+```go
 func readHandler(w http.ResponseWriter, r *http.Request) {
   name := "username"
   var username interface{}
@@ -123,7 +123,7 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
 ```
 
 or so
-```
+```go
 func readHandler(w http.ResponseWriter, r *http.Request) {
   var tempStr string = ""
 
@@ -139,12 +139,12 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
 ```
 
 Removing an entry from a session of a specific client is carried out using the `(id SessionId) Remove(name string)` method
-```
+```go
 id.Remove("name variable")
 ```
 
 In the handler it looks like this
-```
+```go
 func removeHandler(w http.ResponseWriter, r *http.Request) {
   id := gosession.Start(&w, r)
   id.Remove("name variable") // Removing a variable from a specific client session
@@ -155,12 +155,12 @@ func removeHandler(w http.ResponseWriter, r *http.Request) {
 ```
 
 Removing the entire session of a specific client is done using the `(id SessionId) Destroy(w *http.ResponseWriter)` method
-```
+```go
 id.Destroy(&w)
 ```
 
 In the handler it looks like this
-```
+```go
 func destroyHandler(w http.ResponseWriter, r *http.Request) {
   id := gosession.Start(&w, r)
   id.Destroy(&w) // Deleting the entire session of a specific client
@@ -172,7 +172,7 @@ func destroyHandler(w http.ResponseWriter, r *http.Request) {
 
 GoSession allows you to change its settings with the `SetSettings(setings GoSessionSetings)` function,  
 which is used outside of the handler, for example, inside the `main()` function
-```
+```go
 var mySetingsSession = gosession.GoSessionSetings{
   CookieName:    gosession.GOSESSION_COOKIE_NAME,
   Expiration:    gosession.GOSESSION_EXPIRATION,
@@ -183,7 +183,7 @@ gosession.SetSetings(mySetingsSession) // Setting session preferences
 ```
 
 GoSession has 3 constants available for use
-```
+```go
 const (
   GOSESSION_COOKIE_NAME        string        = "SessionId" // Name for session cookies
   GOSESSION_EXPIRATION         int64         = 43_200      // Max age is 12 hours.
@@ -207,7 +207,7 @@ Install GoSession
 > go get github.com/Kwynto/gosession
 
 Create a `main.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -389,7 +389,7 @@ Install GoSession
 > go get github.com/Kwynto/gosession
 
 Create a `main.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -483,7 +483,7 @@ Install GoSession
 **Now you need to create 11 files.**
 
 Create a `./cmd/web/main.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -547,7 +547,7 @@ func main() {
 ```
 
 Create a `./cmd/web/templates.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -606,7 +606,7 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 ```
 
 Create a `./cmd/web/routes.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -661,7 +661,7 @@ func (app *application) routes() *http.ServeMux {
 ```
 
 Create a `./cmd/web/handlers.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -790,7 +790,7 @@ func (app *application) buyPage(w http.ResponseWriter, r *http.Request) {
 ```
 
 Create a `./cmd/web/helpers.go` file and save this code into it:
-```
+```go
 package main
 
 import (
@@ -882,7 +882,7 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 ```
 
 Create a `./ui/html/base.layout.tmpl` file and save this code into it:
-```
+```html
 {{define "base"}}
 <!doctype html>
 <html lang='en'>
@@ -910,14 +910,14 @@ Create a `./ui/html/base.layout.tmpl` file and save this code into it:
 ```
 
 Create a `./ui/html/footer.partial.tmpl` file and save this code into it:
-```
+```html
 {{define "footer"}}
 <footer>This is the third example of a <strong>GoLang</strong> site using <strong>GoSession</strong>.</footer>
 {{end}}
 ```
 
 Create a `./ui/html/home.page.tmpl` file and save this code into it:
-```
+```html
 {{template "base" .}}
 
 {{define "title"}}Home Page{{end}}
@@ -966,7 +966,7 @@ Create a `./ui/html/home.page.tmpl` file and save this code into it:
 ```
 
 Create a `./ui/html/homeauth.page.tmpl` file and save this code into it:
-```
+```html
 {{template "base" .}}
 
 {{define "title"}}Home Page{{end}}
@@ -1009,7 +1009,7 @@ Create a `./ui/html/homeauth.page.tmpl` file and save this code into it:
 ```
 
 Create a `./ui/static/css/main.css` file and save this code into it:
-```
+```css
 * {
     box-sizing: border-box;
     margin: 0;
@@ -1316,7 +1316,7 @@ footer {
 ```
 
 Create a `./ui/static/js/main.js` file and save this code into it:
-```
+```js
 var navLinks = document.querySelectorAll("nav a");
 for (var i = 0; i < navLinks.length; i++) {
 	var link = navLinks[i]
@@ -1388,9 +1388,16 @@ You can look at code performance tests:
 
 *The slowest of all functions is `cleaningSessions()`, but this should not scare you, as it is a utility function and is rarely executed. This function does not affect the performance of the entire mechanism, it is only needed to clean up the storage from lost sessions.*
 
+**Links**
+
+repo link: http://github.com/Kwynto/gosession
+pkg.go.dev: https://pkg.go.dev/github.com/Kwynto/gosession
+goreportcard.com: https://goreportcard.com/report/github.com/Kwynto/gosession
+coverage service link: https://gocover.io/github.com/Kwynto/gosession
+
 ## About the author
 
 The author of the project is Constantine Zavezeon (Kwynto).  
-You can contact the author by e-mail kwynto@mail.ru  
+You can contact the author by e-mail: kwynto@mail.ru  
 The author accepts proposals for participation in open source projects,  
 as well as willing to accept job offers.

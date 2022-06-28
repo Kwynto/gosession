@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	GOSESSION_TESTING_ITER int = 1000
+	GOSESSION_TESTING_ITER int = 100
 )
 
 // --------------
