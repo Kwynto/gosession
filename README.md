@@ -1,6 +1,8 @@
 # GoSession
 This is quick session for net/http in GoLang.  
-This package is perhaps the best implementation of the session mechanism, at least it tries to become one.
+This package is perhaps the best implementation of the session mechanism, at least it tries to become one.  
+
+[![GoDoc](https://godoc.org/github.com/Kwynto/gosession?status.svg)](https://godoc.org/github.com/Kwynto/gosession) [![Go Report Card](https://goreportcard.com/badge/github.com/Kwynto/gosession)](https://goreportcard.com/report/github.com/Kwynto/gosession) [![gocover.io](https://gocover.io/_badge/github.com/Kwynto/gosession)](https://gocover.io/github.com/Kwynto/gosession)  
 
 **Important note**
 This package is designed to work with the standard net/http package and has not been tested with other http packages by the developer.
@@ -1387,13 +1389,6 @@ You can look at code performance tests:
 > go test -benchmem -bench="." gosession.go gosession_test.go
 
 *The slowest of all functions is `cleaningSessions()`, but this should not scare you, as it is a utility function and is rarely executed. This function does not affect the performance of the entire mechanism, it is only needed to clean up the storage from lost sessions.*
-
-**Links**
-
-repo link: http://github.com/Kwynto/gosession
-pkg.go.dev: https://pkg.go.dev/github.com/Kwynto/gosession
-goreportcard.com: https://goreportcard.com/report/github.com/Kwynto/gosession
-coverage service link: https://gocover.io/github.com/Kwynto/gosession
 
 ## About the author
 
