@@ -1,0 +1,45 @@
+{{template "base" .}}
+
+{{define "title"}}Home Page{{end}}
+
+{{define "main"}}
+	<table>
+		<tr>
+			<td rowspan="2" valign="top">
+				<p>
+					<h2>Authorization</h2>
+					<form action="/auth" method="post" class="form-horizontal">
+						<input name="login" type="text" value="" placeholder="Login" required pattern="^[a-zA-Z0-9_-]+$">
+						<input name="password" type="password" value="" placeholder="Password" required pattern="^[a-zA-Z0-9]+$">
+						<button name="signin" type="submit">Auth button</button>
+					</form>
+					<br><br>
+				</p>
+				<p>
+					<h2>Links:</h2>
+					<a href="/product1">Buy Product No. 1</a><br><br>
+					<a href="/product2">Buy Product No. 2</a><br><br>
+					<a href="/product3">Buy Product No. 3</a><br><br>
+				</p>
+			</td>
+			<td width="250px">
+				<p>
+					<h2>Shopping cart</h2>
+					{{ range $key, $pr := .Cart }}
+						{{ $pr }}<br>
+					{{end}}
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<p>
+					<h2>Browsing history:</h2>
+					{{ range $key, $tr := .Transitions }}
+						{{ $tr }}<br>
+					{{end}}
+				</p>
+			</td>
+		</tr>
+	</table>
+{{end}}
