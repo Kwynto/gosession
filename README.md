@@ -2,6 +2,7 @@
 This is quick session for net/http in GoLang.  
 This package is perhaps the best implementation of the session mechanism, at least it tries to become one.  
 
+[![GoDoc](https://godoc.org/github.com/Kwynto/gosession?status.svg)](https://godoc.org/github.com/Kwynto/gosession) [![Go Report Card](https://goreportcard.com/badge/github.com/Kwynto/gosession)](https://goreportcard.com/report/github.com/Kwynto/gosession) [![gocover.io](https://gocover.io/_badge/github.com/Kwynto/gosession)](https://gocover.io/github.com/Kwynto/gosession) [![GitHub](https://img.shields.io/github/license/Kwynto/gosession)](https://github.com/Kwynto/gosession/blob/master/LICENSE)
 ![Coverage](https://img.shields.io/badge/Coverage-100.0%25-brightgreen)
 
 **Important note**
