@@ -207,7 +207,8 @@ The remaining functions, types and variables in GoSession are auxiliary and are 
 Download the GoSession project to your computer:
 > git clone https://github.com/Kwynto/gosession.git
 
-Go to the `./gosession/pkg/example1` folder or open this folder in your IDE.
+Go to the example folder or open this folder in your IDE.
+> cd ./gosession/pkg/example1
 
 Install GoSession
 > go get github.com/Kwynto/gosession
@@ -227,7 +228,8 @@ Visit site
 Download the GoSession project to your computer:
 > git clone https://github.com/Kwynto/gosession.git
 
-Go to the `./gosession/pkg/example2` folder or open this folder in your IDE.
+Go to the example folder or open this folder in your IDE.
+> cd ./gosession/pkg/example2
 
 Install GoSession
 > go get github.com/Kwynto/gosession
@@ -249,7 +251,8 @@ Now you can follow the links on this site and see how the site saves and shows y
 Download the GoSession project to your computer:
 > git clone https://github.com/Kwynto/gosession.git
 
-Go to the `./gosession/pkg/example3` folder or open this folder in your IDE.
+Go to the example folder or open this folder in your IDE.
+> cd ./gosession/pkg/example3
 
 Install GoSession
 > go get github.com/Kwynto/gosession
