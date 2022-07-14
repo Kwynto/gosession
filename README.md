@@ -1,4 +1,5 @@
 # GoSession
+![Coverage](https://img.shields.io/badge/Coverage-100.0%25-brightgreen)
 This is quick session for net/http in GoLang.  
 This package is perhaps the best implementation of the session mechanism, at least it tries to become one.  
 
