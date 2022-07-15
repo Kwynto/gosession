@@ -32,6 +32,8 @@ While the user is working with the site, he saves cookies with a unique identifi
 User data received during the session period can be used for authorization, marketing and many other cases when it is necessary to collect, process and analyze data about a specific user.  
 A session is an efficient method of interacting with a user.
 
+**[⬆ back to top](#gosession)**
+
 ## How to connect GoSession
 In your project folder, initialize the Go-module with the command
 > go mod init your_app_name
@@ -43,6 +45,8 @@ Now you can add the GoSession package to your Go-code file, for example in `main
 ```go
 import "github.com/Kwynto/gosession"
 ```
+
+**[⬆ back to top](#gosession)**
 
 ## How to use GoSession
 To use the GoSession package, you need to import it into your code.
@@ -199,6 +203,8 @@ const (
 
 The remaining functions, types and variables in GoSession are auxiliary and are used only within the package.
 
+**[⬆ back to top](#gosession)**
+
 ## Examples of using
 
 ### Example 1:
@@ -268,6 +274,8 @@ Visit site
 
 Now you can follow the links on this site.
 
+**[⬆ back to top](#gosession)**
+
 ## About the package
 
 GoSession has a description of its functionality in a `README.md` file and internal documentation.  
@@ -318,9 +326,13 @@ You can look at code performance tests:
 
 *The slowest of all functions is `cleaningSessions()`, but this should not scare you, as it is a utility function and is rarely executed. This function does not affect the performance of the entire mechanism, it is only needed to clean up the storage from lost sessions.*
 
+**[⬆ back to top](#gosession)**
+
 ## About the author
 
 The author of the project is Constantine Zavezeon (Kwynto).  
 You can contact the author by e-mail: kwynto@mail.ru  
 The author accepts proposals for participation in open source projects,  
 as well as willing to accept job offers.
+
+**[⬆ back to top](#gosession)**
