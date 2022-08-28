@@ -2,6 +2,10 @@
 // This package is perhaps the best implementation of the session mechanism, at least it tries to become one.
 package gosession
 
+// --------------------------------------------------------
+// Copyright (c) 2022 Constantine Zavezeon <kwynto@mail.ru>
+// --------------------------------------------------------
+
 import (
 	"crypto/rand"
 	"fmt"
