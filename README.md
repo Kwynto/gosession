@@ -77,7 +77,7 @@ The use of these functions is exactly the same.
 id := gosession.StartSecure(&w, r)
 ```
 
-You need to call the `gosession.StartSecure(w *http.ResponseWriter, r *http.Request)` function from the handler  
+You need to call the `gosession.StartSecure()` function from the handler  
 ```go
 func rootHandler(w http.ResponseWriter, r *http.Request) {
   id := gosession.StartSecure(&w, r) // Get the storage ID for a specific user
@@ -89,7 +89,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 Once you have a store ID, you can write variables to the store, read them, and delete them.
 
-Recording is done using the `(id SessionId) Set(name string, value interface{})` method
+Recording is done using the `Set(name string, value interface{})` method
 ```go
 id.Set("name variable", anyVariable)
 ```
@@ -108,8 +108,8 @@ func writeHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Reading is done by `(id SessionId) Get(name string) interface{}` method for one variable  
-and the `(id SessionId) GetAll() Session` method to read all session variables
+Reading is done by `Get(name string) interface{}` method for one variable  
+and the `GetAll() Session` method to read all session variables
 ```go
 anyVariable := id.Get("name variable")
 ```
@@ -125,7 +125,7 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
   var username interface{}
 
   id := gosession.Start(&w, r)
-  username := id.Get(name) // Reading the "username" variable from the session for a specific user
+  username = id.Get(name) // Reading the "username" variable from the session for a specific user
 
   html := "<html><head><title>Title</title></head><body>%s</body></html>"
   fmt.Fprintf(w, html, username)
@@ -148,7 +148,7 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Removing an entry from a session of a specific client is carried out using the `(id SessionId) Remove(name string)` method
+Removing an entry from a session of a specific client is carried out using the `Remove(name string)` method
 ```go
 id.Remove("name variable")
 ```
@@ -164,7 +164,7 @@ func removeHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Removing the entire session of a specific client is done using the `(id SessionId) Destroy(w *http.ResponseWriter)` method
+Removing the entire session of a specific client is done using the `Destroy(w *http.ResponseWriter)` method
 ```go
 id.Destroy(&w)
 ```
