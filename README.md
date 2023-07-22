@@ -5,7 +5,8 @@ This package is perhaps the best implementation of the session mechanism, at lea
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 [![GoDoc](https://godoc.org/github.com/Kwynto/gosession?status.svg)](https://godoc.org/github.com/Kwynto/gosession)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Kwynto/gosession)](https://goreportcard.com/report/github.com/Kwynto/gosession)
-[![GitHub](https://img.shields.io/github/license/Kwynto/gosession)](https://github.com/Kwynto/gosession/blob/master/LICENSE) 
+[![GitHub](https://img.shields.io/github/license/Kwynto/gosession)](https://github.com/Kwynto/gosession/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/Kwynto/gosession/branch/main/graph/badge.svg?token=TXP2NOMK58)](https://codecov.io/gh/Kwynto/gosession) 
 
 **Important note**
 This package is designed to work with the standard net/http package and has not been tested with other http packages by the developer.
