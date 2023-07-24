@@ -6,8 +6,7 @@ This package is perhaps the best implementation of the session mechanism, at lea
 [![GoDoc](https://godoc.org/github.com/Kwynto/gosession?status.svg)](https://godoc.org/github.com/Kwynto/gosession)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Kwynto/gosession)](https://goreportcard.com/report/github.com/Kwynto/gosession)
 [![GitHub](https://img.shields.io/github/license/Kwynto/gosession)](https://github.com/Kwynto/gosession/blob/master/LICENSE)
-[![gocover.io](https://gocover.io/_badge/github.com/Kwynto/gosession)](https://gocover.io/github.com/Kwynto/gosession)
-![Coverage](https://img.shields.io/badge/Coverage-100.0%25-brightgreen)
+[![codecov](https://codecov.io/gh/Kwynto/gosession/branch/main/graph/badge.svg?token=TXP2NOMK58)](https://codecov.io/gh/Kwynto/gosession) 
 
 **Important note**
 This package is designed to work with the standard net/http package and has not been tested with other http packages by the developer.
@@ -20,10 +19,10 @@ This package is designed to work with the standard net/http package and has not 
   - [How to connect GoSession](#how-to-connect-gosession)
   - [How to use GoSession](#how-to-use-gosession)
   - [Examples of using](#examples-of-using)
-    - [Example 1](#example-1)
-    - [Example 2](#example-2)
-    - [Example 3](#example-3)
-  - [About the package  (documentation, testing and benchmarking)](#about-the-package)
+    - [Example 1:](#example-1)
+    - [Example 2:](#example-2)
+    - [Example 3:](#example-3)
+  - [About the package](#about-the-package)
   - [About the author](#about-the-author)
 
 ## What are sessions and why are they needed
@@ -300,6 +299,8 @@ And then in your web browser navigate to the uri:
 
 *The `godoc` utility may not be present in your Go build and you may need to install it  
 command `go get -v golang.org/x/tools/cmd/godoc`*
+
+**For Debian Linux users (Ubuntu, Mint and others):** *You may need to install the tools with the `sudo apt install golang-golang-x-tools` command* 
 
 You can also use Go's standard functionality to view documentation in the console via `go doc`.  
 For example:  
