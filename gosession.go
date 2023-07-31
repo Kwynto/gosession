@@ -9,7 +9,6 @@ package gosession
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -224,5 +223,5 @@ func StartSecure(w *http.ResponseWriter, r *http.Request) SessionId {
 // Package initialization
 func init() {
 	time.AfterFunc(setingsSession.TimerCleaning, cleaningSessions)
-	log.Println("GoSessions initialized")
+	// log.Println("GoSessions initialized")
 }
