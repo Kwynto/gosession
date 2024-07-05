@@ -107,20 +107,21 @@ func Test_getOrSetCookie(t *testing.T) {
 
 func Test_deleteCookie(t *testing.T) {
 	for i := 0; i < GOSESSION_TESTING_ITER; i++ {
-		handler := func(w http.ResponseWriter, r *http.Request) {
+		// handler := func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter) {
 			deleteCookie(&w) // calling the tested function
 			io.WriteString(w, "<html><head><title>Title</title></head><body>Body</body></html>")
 		}
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest("GET", "/", nil)
+		// r := httptest.NewRequest("GET", "/", nil)
 		clientId := generateId()
-		cookie := &http.Cookie{
-			Name:   setingsSession.CookieName,
-			Value:  string(clientId),
-			MaxAge: 0,
-		}
-		r.AddCookie(cookie)
-		handler(w, r)
+		// cookie := &http.Cookie{
+		// 	Name:   setingsSession.CookieName,
+		// 	Value:  string(clientId),
+		// 	MaxAge: 0,
+		// }
+		// r.AddCookie(cookie)
+		handler(w)
 
 		status := w.Code
 		// work check
@@ -583,20 +584,21 @@ func Benchmark_getOrSetCookie(b *testing.B) {
 }
 
 func Benchmark_deleteCookie(b *testing.B) {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	// handler := func(w http.ResponseWriter, r *http.Request) {
+	handler := func(w http.ResponseWriter) {
 		deleteCookie(&w) // calling the tested function
 	}
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
-	cookie := &http.Cookie{
-		Name:   setingsSession.CookieName,
-		Value:  string(generateId()),
-		MaxAge: 0,
-	}
-	r.AddCookie(cookie)
+	// r := httptest.NewRequest("GET", "/", nil)
+	// cookie := &http.Cookie{
+	// 	Name:   setingsSession.CookieName,
+	// 	Value:  string(generateId()),
+	// 	MaxAge: 0,
+	// }
+	// r.AddCookie(cookie)
 
 	for i := 0; i < b.N; i++ {
-		handler(w, r)
+		handler(w)
 	}
 }
 
@@ -731,12 +733,13 @@ func Benchmark_Destroy(b *testing.B) {
 		data:       data,
 	}
 
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	// handler := func(w http.ResponseWriter, r *http.Request) {
+	handler := func(w http.ResponseWriter) {
 		id.Destroy(&w) // calling the tested function
 	}
 
 	for i := 0; i < b.N; i++ {
-		handler(w, r)
+		handler(w)
 	}
 }
 
